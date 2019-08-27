@@ -4,6 +4,7 @@ from qos import *
 import os, sys, time
 
 import numpy as np
+import math
 #import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -27,7 +28,8 @@ if __name__ == '__main__':
 
     diff_value = [999] * 150 #還是不太懂為啥這樣設定diff_value = [999, 999, ..., 999]
     flag = 1
-    matrix = [-12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5, 15]
+    #matrix = [-12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5, 15]
+    num_of_level = 12
     response = 0
     replace = 30 #profile size
     each_test_bw_value = []
@@ -37,19 +39,25 @@ if __name__ == '__main__':
         # Initialization
         print ("flag now is ", flag)
         p, q = 0, 0
-        x = [ [] for i in range(len(matrix)) ] #link 1 的頻寬, p #len(matrix) = 12
-        y = [ [] for i in range(len(matrix)) ] #link 2 的頻寬, q
+        L1 = [ [] for i in range(num_of_level) ] #link 1 的頻寬, p #len(matrix) = 12
+        L2 = [ [] for i in range(num_of_level) ] #link 2 的頻寬, q
 
         while p <= max_x:
             while q <= max_y:
                 #從
                 if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
                     output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
-                    compare = [(output - i) ** 2 for i in matrix]                    
-                    qos_level = compare.index(min(compare)) #這裡的qos_level是指Service Response Level 1 -> 12
+                    #compare = [(output - i) ** 2 for i in matrix]                    
+                    #qos_level = compare.index(min(compare)) #這裡的qos_level是指Service Response Level 1 -> 12
+                    if (output - (-12.5)) <= 0:
+                        qos_level = 0
+                    elif (output - (-12.5)) > 25:
+                        qos_level = 11
+                    else:
+                        qos_level = math.ceil((output - (-12.5))/2.5)
                     
-                    x[qos_level].append(p)
-                    y[qos_level].append(q)
+                    L1[qos_level].append(p)
+                    L2[qos_level].append(q)
                 q += 0.25
             q = 0
             p += 0.25
@@ -57,16 +65,16 @@ if __name__ == '__main__':
         # print("x[] = ", x)
         # print("y[] = ", y)
         # os.system("pause")
-        x_1, y_1, x_9, y_9 = [], [], [], []
-
+        x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。
+ 
 
         for i in range(0, 8): #這部分會判斷為Bad
-            x_1 += x[i] #分配給Link 1且被判斷為Service Response Level 1~8的所有頻寬
-            y_1 += y[i] #分配給Link 2且被判斷為Service Response Level 1~8的所有頻寬
+            x_1 += L1[i] #分配給Link 1且被判斷為Service Response Level 1~8的所有頻寬
+            y_1 += L2[i] #分配給Link 2且被判斷為Service Response Level 1~8的所有頻寬
 
         for i in range(8, 12): #這部分會判斷為Excellent
-            x_9 += x[i] #分配給Link 1且被判斷為Service Response Level 9~12的所有頻寬 #9~12為QoS Level 2
-            y_9 += y[i] #分配給Link 2且被判斷為Service Response Level 9~12的所有頻寬
+            x_9 += L1[i] #分配給Link 1且被判斷為Service Response Level 9~12的所有頻寬 #9~12為QoS Level 2
+            y_9 += L2[i] #分配給Link 2且被判斷為Service Response Level 9~12的所有頻寬
 
         exp_x, exp_y = 0, 0
 
@@ -89,9 +97,9 @@ if __name__ == '__main__':
         allocated_BW = exp_x + exp_y
 
         pkt_loss = experiment[flag-1] - allocated_BW #好像不用if判斷式
-        # pkt_loss > 0 表示給得頻寬不夠
-        # pkt_loss < 0 表示給得頻寬太多        
-        
+        # pkt_loss > 0 表示給得頻寬不夠，pkt_loss越大，response越小。
+        # pkt_loss < 0 表示給得頻寬太多，pkt_loss越小，response越大。
+
         # if allocated_BW > experiment[flag-1]:
         #     pkt_loss = experiment[flag-1] - allocated_BW
         # # elif tx - rx > 1.5:
@@ -99,32 +107,34 @@ if __name__ == '__main__':
         # else:
         #     pkt_loss = experiment[flag-1] - allocated_BW
 
-        response = 0 #用來判斷這次的頻寬分配好與壞
+        # response = 0 #將response值歸零
+        response = -(pkt_loss)
 
-        if pkt_loss < -12.5:
-            response = 15.0
-        elif -12.5 <= pkt_loss < -10:
-            response = 12.5
-        elif -10 <= pkt_loss < -7.5:
-            response = 10
-        elif -7.5 <= pkt_loss < -5:
-            response = 7.5
-        elif -5 <= pkt_loss < -2.5:
-            response = 5
-        elif -2.5 <= pkt_loss < 0:
-            response = 2.5
-        elif 0 <= pkt_loss < 2.5:
-            response = 0
-        elif 2.5 <= pkt_loss < 5:
-            response = -2.5
-        elif 5 <= pkt_loss < 7.5:
-            response = -5
-        elif 7.5 <= pkt_loss < 10:
-            response = -7.5
-        elif 10 <= pkt_loss < 12.5:
-            response = -10
-        else:
-            response = -12.5
+        #用來判斷這次的頻寬分配的等級，沒有好壞，單純依照QoS Level的需求而定。
+        # if pkt_loss < -12.5:
+        #     response = 15.0
+        # elif -12.5 <= pkt_loss < -10:
+        #     response = 12.5
+        # elif -10 <= pkt_loss < -7.5:
+        #     response = 10
+        # elif -7.5 <= pkt_loss < -5:
+        #     response = 7.5
+        # elif -5 <= pkt_loss < -2.5:
+        #     response = 5
+        # elif -2.5 <= pkt_loss < 0:
+        #     response = 2.5
+        # elif 0 <= pkt_loss < 2.5:
+        #     response = 0
+        # elif 2.5 <= pkt_loss < 5:
+        #     response = -2.5
+        # elif 5 <= pkt_loss < 7.5:
+        #     response = -5
+        # elif 7.5 <= pkt_loss < 10:
+        #     response = -7.5
+        # elif 10 <= pkt_loss < 12.5:
+        #     response = -10
+        # else:
+        #     response = -12.5
 
         if pkt_loss < 0 and flag > 1:
             total_RAB = total_RAB + abs(pkt_loss)
@@ -132,21 +142,24 @@ if __name__ == '__main__':
             total_DLR = total_DLR + pkt_loss
         print ("response :", response)
 
-        if (flag <= replace): #profile放滿之前都可以直接放到profile中
+        if (len(train_x) < replace): #profile放滿之前都可以直接放到profile中
             train_x.append([exp_x, exp_y])
             train_y.append([response])
 
-        elif (flag > replace): #profile放滿之後，
+        else: #profile放滿之後，
             for i in range(len(train_x)):
-                diff_value[i] = abs((sum(train_x[i]) - allocated_BW)) 
+                diff_value[i] = abs((sum(train_x[i]) - allocated_BW))
                 #diff_value = [999, 999, ..., 999] #((p + q) - allocated_BW)的絕對值
                 #目的是找出train_x[]中所存的頻寬分配與最新的allocated_BW的差值
-            
             for i in range(len(train_x)):
-                if (sum(train_y[i]) >= 7.5 and response >= 7.5 ): #train_y[]中存放的是舊的response值，而response為現在要存放的新值
-                    diff_value[i] = 999                    
-                elif (sum(train_y[i]) < 7.5 and response < 7.5):
+                if (sum(train_y[i]) > 7.5): #train_y[]中存放的是舊的response值，而response為現在要存放的新值
                     diff_value[i] = 999
+            
+            # for i in range(len(train_x)): #我覺得這邊是把service response與新的response值接近的組合保留在training data中。
+            #     if (sum(train_y[i]) >= 7.5 and response >= 7.5 ): #train_y[]中存放的是舊的response值，而response為現在要存放的新值
+            #         diff_value[i] = 999                    
+            #     elif (sum(train_y[i]) < 7.5 and response < 7.5):
+            #         diff_value[i] = 999
 
             #找diff_value最小的index，將新值存入該index的位子做替換
             min_index = diff_value.index(min(diff_value))
@@ -155,6 +168,9 @@ if __name__ == '__main__':
 
             each_test_bw_value.append(train_x)
             each_test_response_value.append(train_y)
+
+        print("Data in Profile :", len(train_x))
+        print()
 
         bw_rec.append(allocated_BW)
         flag = flag + 1
