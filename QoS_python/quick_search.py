@@ -32,6 +32,7 @@ if __name__ == '__main__':
     for current_run in experiment: #len(experiment) = 40
         # Initialization
         print ("flag now is ", flag)
+        print ("data is ", current_run)
         
         L1 = [ [] for i in range(num_of_level) ] #link 1 的頻寬, p
         L2 = [ [] for i in range(num_of_level) ] #link 2 的頻寬, q
@@ -55,22 +56,22 @@ if __name__ == '__main__':
         #     q = 0
         #     p += 0.25
 
-        if (response > 0): #給太多，所以這次的搜尋範圍就不超過上次的allocated_BW
-            print("Too Much !")
-            p, q = 0, 0
+        if (response > 7.5): #給太多，所以這次的搜尋範圍就不超過上次的allocated_BW - 5
+            print("Response Over 7.5!")
+            os.system("pause")
+            p, q = 0, 0 #這個起始值還可以再調整!!!!!
             while p <= max_x:
                 while q <= max_y:
-                    # print("p =", p, ", q =", q)
-                    if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
-                        output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
-                        if (output - (-12.5)) <= 0:
-                            qos_level = 0
-                        elif (output - (-12.5)) > 25:
-                            qos_level = 11
-                        else:
-                            qos_level = math.ceil((output - (-12.5))/2.5)
-                        L1[qos_level].append(p)
-                        L2[qos_level].append(q)
+                    print("p =", p, ", q =", q)
+                    output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+                    if (output - (-12.5)) <= 0:
+                        qos_level = 0
+                    elif (output - (-12.5)) > 25:
+                        qos_level = 11
+                    else:
+                        qos_level = math.ceil((output - (-12.5))/2.5)
+                    L1[qos_level].append(p)
+                    L2[qos_level].append(q)
 
                     if ((q < allocated_BW and p + q < allocated_BW) or (allocated_BW == 0.0)):
                         # print("q += 0.25 !")
@@ -83,20 +84,21 @@ if __name__ == '__main__':
                     p += 0.25
                 # os.system("pause")
 
-        else: #給太少，所以這次的搜尋範圍就從上次的allocated_BW開始找起
-            print("Too Less !")
+        elif (response < 5): #給太少，所以這次的搜尋範圍就從上次的allocated_BW + 7.5開始找起
+            print("Response less than 5!")
+            os.system("pause")
             if (max_y < allocated_BW): #q_max < allocated_BW
-                p = allocated_BW - max_y
+                p = allocated_BW - max_y + 7.5
                 q = max_y
                 q_pointer = max_y
             else: #q_max > allocated_BW
                 p = 0
-                q = allocated_BW
-                q_pointer = allocated_BW
+                q = allocated_BW + 7.5
+                q_pointer = allocated_BW + 7.5
 
             while p <= max_x:
                 while q <= max_y:
-                    # print("p =", p, ", q =", q)
+                    print("p =", p, ", q =", q)
                     output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
                     if (output - (-12.5)) <= 0:
                         qos_level = 0
@@ -110,6 +112,43 @@ if __name__ == '__main__':
                     q += 0.25
                 q = q_pointer
                 p += 0.25
+                # os.system("pause")
+
+        else:
+            print("5 <= Response <= 7.5!")
+            os.system("pause")
+            if (max_y < allocated_BW - 5): #q_max < allocated_BW
+                p = allocated_BW - 5 - max_y
+                q = max_y
+                q_pointer = max_y
+            else: #q_max >= allocated_BW
+                p = 0
+                q = allocated_BW - 5
+                q_pointer = allocated_BW -5
+
+            while p <= max_x:
+                while q <= max_y:
+                    print("p =", p, ", q =", q)
+                    output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+                    if (output - (-12.5)) <= 0:
+                        qos_level = 0
+                    elif (output - (-12.5)) > 25:
+                        qos_level = 11
+                    else:
+                        qos_level = math.ceil((output - (-12.5))/2.5)
+                    L1[qos_level].append(p)
+                    L2[qos_level].append(q)
+
+                    if (p + q < allocated_BW + 7.5):
+                        q += 0.25
+                    else:
+                        break
+
+                q = q_pointer
+                if (p + q < allocated_BW + 7.5):
+                    p += 0.25
+                else:
+                    break
                 # os.system("pause")
 
         x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。 
@@ -141,6 +180,7 @@ if __name__ == '__main__':
             print ("Bad")
 
         allocated_BW = exp_x + exp_y
+        print ("allocated_BW :", allocated_BW)
 
         pkt_loss = experiment[flag-1] - allocated_BW
         response = -(pkt_loss)
@@ -169,6 +209,7 @@ if __name__ == '__main__':
 
         print("Data in Profile :", len(train_x))
         print()
+        os.system("pause")
 
         bw_rec.append(allocated_BW)
         flag = flag + 1
