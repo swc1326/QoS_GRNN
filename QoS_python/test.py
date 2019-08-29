@@ -60,7 +60,6 @@ if (response >= 0): #給太多，所以這次的搜尋範圍就不超過上次�
         while q <= max_y:
             #if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
             print("p =", p, ", q =", q)
-            os.system("pause")
             if (q < allocated_BW and p + q < allocated_BW):
                 q += 0.25
             else:
@@ -68,6 +67,7 @@ if (response >= 0): #給太多，所以這次的搜尋範圍就不超過上次�
         q = 0
         if (p < allocated_BW):
             p += 0.25
+        os.system("pause")
 
 else: #給太少，所以這次的搜尋範圍就從上次的allocated_BW開始找起
     print("Too Less !")
@@ -84,7 +84,7 @@ else: #給太少，所以這次的搜尋範圍就從上次的allocated_BW開始�
         while q <= max_y:
             #if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
             print("p =", p, ", q =", q)
-            os.system("pause")
             q += 0.25
         q = q_pointer
         p += 0.25
+        os.system("pause")

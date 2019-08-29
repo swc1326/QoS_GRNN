@@ -17,4 +17,5 @@ def grnn(data, train_x, train_y, sigma): #data = [p, q] #train_x = [[3, 5], [3, 
             factor += train_y[i][dim] * cache # train_y * W() 函式累加，公式中的分子
             divide += cache # W() 函式累加，公式中的分母
         result.append(factor / divide) # 最終的預測值[list]
+    # print("grnn finish !")
     return result # 返回預測值[list]，result = [y*]

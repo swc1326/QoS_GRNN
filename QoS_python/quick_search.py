@@ -18,56 +18,101 @@ if __name__ == '__main__':
                [24, 64], [43, 46], [31, 51]]
     train_y = [[-3.75], [5], [-2.5], [15], [-5], [-5], [-2.5], [15], [15], [15], [15], [15], [15], [15]]
     sigma = 20.0
-    pkt_loss, allocated_BW = 0.0, 0.0
-    total_RAB, total_DLR = 0.0, 0.0
-    AVG_RAB, AVG_DLR = 0.0, 0.0
     max_x, max_y =30, 50
+    pkt_loss, allocated_BW = 0.0, 0.0
     
     bw_rec = []
-    tx_rec = []
 
     diff_value = [999] * 150 #還是不太懂為啥這樣設定diff_value = [999, 999, ..., 999]
     flag = 1
-    #matrix = [-12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5, 15]
     num_of_level = 12
     response = 0
     replace = 30 #profile size
-    each_test_bw_value = []
-    each_test_response_value = []
 
     for current_run in experiment: #len(experiment) = 40
         # Initialization
         print ("flag now is ", flag)
         
-        L1 = [ [] for i in range(num_of_level) ] #link 1 的頻寬, p #len(matrix) = 12
+        L1 = [ [] for i in range(num_of_level) ] #link 1 的頻寬, p
         L2 = [ [] for i in range(num_of_level) ] #link 2 的頻寬, q
 
-        p, q = 0, 0
-        while p <= max_x:
-            while q <= max_y:
-                if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
+        # p, q = 0, 0
+        # while p <= max_x:
+        #     while q <= max_y:
+        #         if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
+        #             output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+
+        #             if (output - (-12.5)) <= 0:
+        #                 qos_level = 0
+        #             elif (output - (-12.5)) > 25:
+        #                 qos_level = 11
+        #             else:
+        #                 qos_level = math.ceil((output - (-12.5))/2.5)
+                    
+        #             L1[qos_level].append(p)
+        #             L2[qos_level].append(q)
+        #         q += 0.25
+        #     q = 0
+        #     p += 0.25
+
+        if (response > 0): #給太多，所以這次的搜尋範圍就不超過上次的allocated_BW
+            print("Too Much !")
+            p, q = 0, 0
+            while p <= max_x:
+                while q <= max_y:
+                    # print("p =", p, ", q =", q)
+                    if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
+                        output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+                        if (output - (-12.5)) <= 0:
+                            qos_level = 0
+                        elif (output - (-12.5)) > 25:
+                            qos_level = 11
+                        else:
+                            qos_level = math.ceil((output - (-12.5))/2.5)
+                        L1[qos_level].append(p)
+                        L2[qos_level].append(q)
+
+                    if ((q < allocated_BW and p + q < allocated_BW) or (allocated_BW == 0.0)):
+                        # print("q += 0.25 !")
+                        q += 0.25
+                    else:
+                        # print("break !")
+                        break
+                q = 0
+                if ((p < allocated_BW) or (allocated_BW == 0.0)):
+                    p += 0.25
+                # os.system("pause")
+
+        else: #給太少，所以這次的搜尋範圍就從上次的allocated_BW開始找起
+            print("Too Less !")
+            if (max_y < allocated_BW): #q_max < allocated_BW
+                p = allocated_BW - max_y
+                q = max_y
+                q_pointer = max_y
+            else: #q_max > allocated_BW
+                p = 0
+                q = allocated_BW
+                q_pointer = allocated_BW
+
+            while p <= max_x:
+                while q <= max_y:
+                    # print("p =", p, ", q =", q)
                     output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
-                    #compare = [(output - i) ** 2 for i in matrix]                    
-                    #qos_level = compare.index(min(compare)) #這裡的qos_level是指Service Response Level 1 -> 12
                     if (output - (-12.5)) <= 0:
                         qos_level = 0
                     elif (output - (-12.5)) > 25:
                         qos_level = 11
                     else:
                         qos_level = math.ceil((output - (-12.5))/2.5)
-                    
                     L1[qos_level].append(p)
                     L2[qos_level].append(q)
 
-                q += 0.25
-            q = 0
-            p += 0.25
+                    q += 0.25
+                q = q_pointer
+                p += 0.25
+                # os.system("pause")
 
-        # print("x[] = ", x)
-        # print("y[] = ", y)
-        # os.system("pause")
-        x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。
- 
+        x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。 
 
         for i in range(0, 8): #這部分會判斷為Bad
             x_1 += L1[i] #分配給Link 1且被判斷為Service Response Level 1~8的所有頻寬
@@ -97,50 +142,8 @@ if __name__ == '__main__':
 
         allocated_BW = exp_x + exp_y
 
-        pkt_loss = experiment[flag-1] - allocated_BW #好像不用if判斷式
-        # pkt_loss > 0 表示給得頻寬不夠，pkt_loss越大，response越小。
-        # pkt_loss < 0 表示給得頻寬太多，pkt_loss越小，response越大。
-
-        # if allocated_BW > experiment[flag-1]:
-        #     pkt_loss = experiment[flag-1] - allocated_BW
-        # # elif tx - rx > 1.5:
-        #    # pkt_loss = tx - rx
-        # else:
-        #     pkt_loss = experiment[flag-1] - allocated_BW
-
-        # response = 0 #將response值歸零
+        pkt_loss = experiment[flag-1] - allocated_BW
         response = -(pkt_loss)
-
-        #用來判斷這次的頻寬分配的等級，沒有好壞，單純依照QoS Level的需求而定。
-        # if pkt_loss < -12.5:
-        #     response = 15.0
-        # elif -12.5 <= pkt_loss < -10:
-        #     response = 12.5
-        # elif -10 <= pkt_loss < -7.5:
-        #     response = 10
-        # elif -7.5 <= pkt_loss < -5:
-        #     response = 7.5
-        # elif -5 <= pkt_loss < -2.5:
-        #     response = 5
-        # elif -2.5 <= pkt_loss < 0:
-        #     response = 2.5
-        # elif 0 <= pkt_loss < 2.5:
-        #     response = 0
-        # elif 2.5 <= pkt_loss < 5:
-        #     response = -2.5
-        # elif 5 <= pkt_loss < 7.5:
-        #     response = -5
-        # elif 7.5 <= pkt_loss < 10:
-        #     response = -7.5
-        # elif 10 <= pkt_loss < 12.5:
-        #     response = -10
-        # else:
-        #     response = -12.5
-
-        if pkt_loss < 0 and flag > 1:
-            total_RAB = total_RAB + abs(pkt_loss)
-        elif pkt_loss >= 0 and flag > 1:
-            total_DLR = total_DLR + pkt_loss
         print ("response :", response)
 
         if (len(train_x) < replace): #profile放滿之前都可以直接放到profile中
@@ -152,25 +155,17 @@ if __name__ == '__main__':
                 diff_value[i] = abs((sum(train_x[i]) - allocated_BW))
                 #diff_value = [999, 999, ..., 999] #((p + q) - allocated_BW)的絕對值
                 #目的是找出train_x[]中所存的頻寬分配與最新的allocated_BW的差值
+            
             for i in range(len(train_x)):
                 if (sum(train_y[i]) >= 7.5 and response >= 7.5 ):
                     diff_value[i] = 999
                 elif (sum(train_y[i]) < 7.5 and response < 7.5):
                     diff_value[i] = 999
-            
-            # for i in range(len(train_x)): #我覺得這邊是把service response與新的response值接近的組合保留在training data中。
-            #     if (sum(train_y[i]) >= 7.5 and response >= 7.5 ): #train_y[]中存放的是舊的response值，而response為現在要存放的新值
-            #         diff_value[i] = 999                    
-            #     elif (sum(train_y[i]) < 7.5 and response < 7.5):
-            #         diff_value[i] = 999
 
             #找diff_value最小的index，將新值存入該index的位子做替換
             min_index = diff_value.index(min(diff_value))
             train_x[min_index] = [exp_x, exp_y]
             train_y[min_index] = [response]
-
-            each_test_bw_value.append(train_x)
-            each_test_response_value.append(train_y)
 
         print("Data in Profile :", len(train_x))
         print()
