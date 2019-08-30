@@ -37,119 +37,123 @@ if __name__ == '__main__':
         L1 = [ [] for i in range(num_of_level) ] #link 1 的頻寬, p
         L2 = [ [] for i in range(num_of_level) ] #link 2 的頻寬, q
 
-        # p, q = 0, 0
-        # while p <= max_x:
-        #     while q <= max_y:
-        #         if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
-        #             output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+        p, q = 0, 0
+        while p <= max_x:
+            while q <= max_y:
+                if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
+                    output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
 
+                    if (output - (-12.5)) <= 0:
+                        qos_level = 0
+                    elif (output - (-12.5)) > 25:
+                        qos_level = 11
+                    else:
+                        qos_level = math.ceil((output - (-12.5))/2.5)
+                    
+                    L1[qos_level].append(p)
+                    L2[qos_level].append(q)
+                q += 0.25
+            q = 0
+            p += 0.25
+
+        # if (response > 7.5): #給太多，所以這次的搜尋範圍就不超過上次的allocated_BW - 5 #效果不好，修正太深
+        #     print("Response Over 7.5!")
+        #     os.system("pause")
+        #     p, q = 0, 0 #這個起始值還可以再調整!!!!!
+        #     while p <= max_x:
+        #         while q <= max_y:
+        #             print("p =", p, ", q =", q)
+        #             output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
         #             if (output - (-12.5)) <= 0:
         #                 qos_level = 0
         #             elif (output - (-12.5)) > 25:
         #                 qos_level = 11
         #             else:
         #                 qos_level = math.ceil((output - (-12.5))/2.5)
-                    
         #             L1[qos_level].append(p)
         #             L2[qos_level].append(q)
-        #         q += 0.25
-        #     q = 0
-        #     p += 0.25
 
-        if (response > 7.5): #給太多，所以這次的搜尋範圍就不超過上次的allocated_BW - 5
-            print("Response Over 7.5!")
-            os.system("pause")
-            p, q = 0, 0 #這個起始值還可以再調整!!!!!
-            while p <= max_x:
-                while q <= max_y:
-                    print("p =", p, ", q =", q)
-                    output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
-                    if (output - (-12.5)) <= 0:
-                        qos_level = 0
-                    elif (output - (-12.5)) > 25:
-                        qos_level = 11
-                    else:
-                        qos_level = math.ceil((output - (-12.5))/2.5)
-                    L1[qos_level].append(p)
-                    L2[qos_level].append(q)
+        #             if (q < allocated_BW - 5 and p + q < allocated_BW - 5):
+        #                 # print("q += 0.25 !")
+        #                 q += 0.25
+        #             else:
+        #                 # print("break !")
+        #                 break
+        #         q = 0
+        #         if (p < allocated_BW - 5):
+        #             p += 0.25
+        #         # os.system("pause")
 
-                    if ((q < allocated_BW and p + q < allocated_BW) or (allocated_BW == 0.0)):
-                        # print("q += 0.25 !")
-                        q += 0.25
-                    else:
-                        # print("break !")
-                        break
-                q = 0
-                if ((p < allocated_BW) or (allocated_BW == 0.0)):
-                    p += 0.25
-                # os.system("pause")
+        # elif (response <= 5): #給太少，所以這次的搜尋範圍就從上次的allocated_BW + 7.5開始找起
+        #     print("Response less than 5!")
+        #     os.system("pause")
+        #     if (allocated_BW + 7.5 <= max_x + max_y):
+        #         if (max_y < allocated_BW + 7.5): #q_max < allocated_BW #要注意allocated_BW + 7.5沒有超過p+q的上限!!!!!!!
+        #             p = allocated_BW + 7.5 - max_y
+        #             q = max_y
+        #             q_pointer = max_y
+        #         else: #q_max > allocated_BW + 7.5
+        #             p = 0
+        #             q = allocated_BW + 7.5
+        #             q_pointer = allocated_BW + 7.5
+        #     else:
+        #         p = max_x
+        #         q = max_y
 
-        elif (response < 5): #給太少，所以這次的搜尋範圍就從上次的allocated_BW + 7.5開始找起
-            print("Response less than 5!")
-            os.system("pause")
-            if (max_y < allocated_BW): #q_max < allocated_BW
-                p = allocated_BW - max_y + 7.5
-                q = max_y
-                q_pointer = max_y
-            else: #q_max > allocated_BW
-                p = 0
-                q = allocated_BW + 7.5
-                q_pointer = allocated_BW + 7.5
+        #     while p <= max_x:
+        #         while q <= max_y:
+        #             print("p =", p, ", q =", q)
+        #             output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+        #             if (output - (-12.5)) <= 0:
+        #                 qos_level = 0
+        #             elif (output - (-12.5)) > 25:
+        #                 qos_level = 11
+        #             else:
+        #                 qos_level = math.ceil((output - (-12.5))/2.5)
+        #             L1[qos_level].append(p)
+        #             L2[qos_level].append(q)
 
-            while p <= max_x:
-                while q <= max_y:
-                    print("p =", p, ", q =", q)
-                    output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
-                    if (output - (-12.5)) <= 0:
-                        qos_level = 0
-                    elif (output - (-12.5)) > 25:
-                        qos_level = 11
-                    else:
-                        qos_level = math.ceil((output - (-12.5))/2.5)
-                    L1[qos_level].append(p)
-                    L2[qos_level].append(q)
+        #             q += 0.25
+        #         q = q_pointer
+        #         p += 0.25
+        #         # os.system("pause")
 
-                    q += 0.25
-                q = q_pointer
-                p += 0.25
-                # os.system("pause")
+        # else: #搜尋範圍 allocated_BW - 5 <= response <= allocated_BW + 7.5 
+        #     print("5 < Response <= 7.5!")
+        #     os.system("pause")
+        #     if (max_y < allocated_BW - 5): #q_max < allocated_BW - 5
+        #         p = allocated_BW - 5 - max_y
+        #         q = max_y
+        #         q_pointer = max_y
+        #     else: #q_max >= allocated_BW - 5
+        #         p = 0
+        #         q = allocated_BW - 5
+        #         q_pointer = allocated_BW - 5
 
-        else:
-            print("5 <= Response <= 7.5!")
-            os.system("pause")
-            if (max_y < allocated_BW - 5): #q_max < allocated_BW
-                p = allocated_BW - 5 - max_y
-                q = max_y
-                q_pointer = max_y
-            else: #q_max >= allocated_BW
-                p = 0
-                q = allocated_BW - 5
-                q_pointer = allocated_BW -5
+        #     while p <= max_x:
+        #         while q <= max_y:
+        #             print("p =", p, ", q =", q)
+        #             output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
+        #             if (output - (-12.5)) <= 0:
+        #                 qos_level = 0
+        #             elif (output - (-12.5)) > 25:
+        #                 qos_level = 11
+        #             else:
+        #                 qos_level = math.ceil((output - (-12.5))/2.5)
+        #             L1[qos_level].append(p)
+        #             L2[qos_level].append(q)
 
-            while p <= max_x:
-                while q <= max_y:
-                    print("p =", p, ", q =", q)
-                    output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
-                    if (output - (-12.5)) <= 0:
-                        qos_level = 0
-                    elif (output - (-12.5)) > 25:
-                        qos_level = 11
-                    else:
-                        qos_level = math.ceil((output - (-12.5))/2.5)
-                    L1[qos_level].append(p)
-                    L2[qos_level].append(q)
+        #             if ((p + q < allocated_BW + 7.5) or allocated_BW == 0):
+        #                 q += 0.25
+        #             else:
+        #                 break
 
-                    if (p + q < allocated_BW + 7.5):
-                        q += 0.25
-                    else:
-                        break
-
-                q = q_pointer
-                if (p + q < allocated_BW + 7.5):
-                    p += 0.25
-                else:
-                    break
-                # os.system("pause")
+        #         q = q_pointer
+        #         if ((p + q < allocated_BW + 7.5) or allocated_BW == 0):
+        #             p += 0.25
+        #         else:
+        #             break
+        #         # os.system("pause")
 
         x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。 
 
@@ -162,6 +166,7 @@ if __name__ == '__main__':
             y_9 += L2[i] #分配給Link 2且被判斷為Service Response Level 9~12的所有頻寬
 
         exp_x, exp_y = 0, 0
+        print("len(x_1) :", len(x_1), " len(x_9) :", len(x_9))        
 
         if len(x_9) != 0:
             z = [x_9[i] + y_9[i] for i in range(len(x_9))] #x_9[i] + y_9[i]為Link 1與Link 2的頻寬總和
