@@ -21,7 +21,7 @@ if __name__ == '__main__':
     max_x, max_y =30, 50
     pkt_loss, allocated_BW = 0.0, 0.0
 
-    wave = (max_x + max_y) / 8
+    wave = (max_x + max_y) / 4
 
     bw_rec = []
 
