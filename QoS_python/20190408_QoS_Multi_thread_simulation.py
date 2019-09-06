@@ -1,6 +1,7 @@
 from grnn import *
 from shell import *
 from qos import *
+from plot_diagram import *
 import os, sys, time
 
 import numpy as np
@@ -45,7 +46,7 @@ if __name__ == '__main__':
         p, q = 0, 0
         while p <= max_x:
             while q <= max_y:
-                if (response >= 7.5 and (p + q < allocated_BW)) or (response < 7.5 and (p + q >= allocated_BW)):
+                if (response >= 0.0 and (p + q <= allocated_BW)) or (response < 0.0 and (p + q >= allocated_BW)):
                     output = grnn([p, q], train_x, train_y, sigma)[0] #output = [y*], 單位為Mbps
                     #compare = [(output - i) ** 2 for i in matrix]                    
                     #qos_level = compare.index(min(compare)) #這裡的qos_level是指Service Response Level 1 -> 12
@@ -109,39 +110,40 @@ if __name__ == '__main__':
         #     pkt_loss = experiment[flag-1] - allocated_BW
 
         # response = 0 #將response值歸零
-        response = -(pkt_loss)
+        # response = -(pkt_loss)
 
         #用來判斷這次的頻寬分配的等級，沒有好壞，單純依照QoS Level的需求而定。
-        # if pkt_loss < -12.5:
-        #     response = 15.0
-        # elif -12.5 <= pkt_loss < -10:
-        #     response = 12.5
-        # elif -10 <= pkt_loss < -7.5:
-        #     response = 10
-        # elif -7.5 <= pkt_loss < -5:
-        #     response = 7.5
-        # elif -5 <= pkt_loss < -2.5:
-        #     response = 5
-        # elif -2.5 <= pkt_loss < 0:
-        #     response = 2.5
-        # elif 0 <= pkt_loss < 2.5:
-        #     response = 0
-        # elif 2.5 <= pkt_loss < 5:
-        #     response = -2.5
-        # elif 5 <= pkt_loss < 7.5:
-        #     response = -5
-        # elif 7.5 <= pkt_loss < 10:
-        #     response = -7.5
-        # elif 10 <= pkt_loss < 12.5:
-        #     response = -10
-        # else:
-        #     response = -12.5
+        if pkt_loss < -12.5:
+            response = 15.0
+        elif -12.5 <= pkt_loss < -10:
+            response = 12.5
+        elif -10 <= pkt_loss < -7.5:
+            response = 10
+        elif -7.5 <= pkt_loss < -5:
+            response = 7.5
+        elif -5 <= pkt_loss < -2.5:
+            response = 5
+        elif -2.5 <= pkt_loss < 0:
+            response = 2.5
+        elif 0 <= pkt_loss < 2.5:
+            response = 0
+        elif 2.5 <= pkt_loss < 5:
+            response = -2.5
+        elif 5 <= pkt_loss < 7.5:
+            response = -5
+        elif 7.5 <= pkt_loss < 10:
+            response = -7.5
+        elif 10 <= pkt_loss < 12.5:
+            response = -10
+        else:
+            response = -12.5
 
-        if pkt_loss < 0 and flag > 1:
-            total_RAB = total_RAB + abs(pkt_loss)
-        elif pkt_loss >= 0 and flag > 1:
-            total_DLR = total_DLR + pkt_loss
         print ("response :", response)
+
+        # if pkt_loss < 0 and flag > 1:
+        #     total_RAB = total_RAB + abs(pkt_loss)
+        # elif pkt_loss >= 0 and flag > 1:
+        #     total_DLR = total_DLR + pkt_loss
 
         if (len(train_x) < replace): #profile放滿之前都可以直接放到profile中
             train_x.append([exp_x, exp_y])
@@ -182,18 +184,20 @@ if __name__ == '__main__':
     print("Source Data Rate", experiment)
     print("Allocated Bandwidth", bw_rec)
 
-    x_array = np.arange(0, len(experiment))
-    y_array = bw_rec
-    z_array = experiment
+    plot_diagram(len(experiment), bw_rec, experiment, flag)
 
-    plt.plot(x_array, y_array, z_array)
-    plt.xlim(0, flag-1)
-    plt.ylim(0, 100)
-    plt.xlabel("Flags")
-    plt.ylabel("Allocated_BW")
-    plt.title("QoS_Simulation")
+    # x_array = np.arange(0, len(experiment))
+    # y_array = bw_rec
+    # z_array = experiment
 
-    plots = plt.plot(x_array, y_array, z_array)
-    plt.legend(plots, ('bw_rec', 'experiment'), loc='best', framealpha=0.5, prop={'size': 'large', 'family': 'monospace'})
-    plt.grid(True)
-    plt.show()
+    # plt.plot(x_array, y_array, z_array)
+    # plt.xlim(0, flag-1)
+    # plt.ylim(0, 100)
+    # plt.xlabel("Flags")
+    # plt.ylabel("Allocated_BW")
+    # plt.title("QoS_Simulation")
+
+    # plots = plt.plot(x_array, y_array, z_array)
+    # plt.legend(plots, ('bw_rec', 'experiment'), loc='best', framealpha=0.5, prop={'size': 'large', 'family': 'monospace'})
+    # plt.grid(True)
+    # plt.show()

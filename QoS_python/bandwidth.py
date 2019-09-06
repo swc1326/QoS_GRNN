@@ -1,4 +1,9 @@
-def bandwidth(L1, L2):
+#
+#def bandwidth(L1, L2)  #L1與L2為兩個Link的頻寬預測值
+#   return result       #result[0]為最終決定的預測值，result[1]為最終預測值的總和allocated_BW
+#
+
+def bandwidth(L1, L2, d):
     x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。
     result = []
 
