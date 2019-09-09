@@ -7,13 +7,13 @@ def bandwidth(L1, L2, d):
     x_1, y_1, x_9, y_9 = [], [], [], [] #這邊訂x_9為QoS Level 2的設定。
     result = []
 
-    for i in range(0, 8): #這部分會判斷為Bad
-        x_1 += L1[i] #分配給Link 1且被判斷為Service Response Level 1~8的所有頻寬
-        y_1 += L2[i] #分配給Link 2且被判斷為Service Response Level 1~8的所有頻寬
+    for i in range(0, d): #這部分會判斷為Bad
+        x_1 += L1[i] #分配給Link 1且被判斷為Service Response Level 1~7的所有頻寬
+        y_1 += L2[i] #分配給Link 2且被判斷為Service Response Level 1~7的所有頻寬
 
-    for i in range(8, 12): #這部分會判斷為Excellent
-        x_9 += L1[i] #分配給Link 1且被判斷為Service Response Level 9~12的所有頻寬 #9~12為QoS Level 2
-        y_9 += L2[i] #分配給Link 2且被判斷為Service Response Level 9~12的所有頻寬 
+    for i in range(d, 12): #這部分會判斷為Excellent
+        x_9 += L1[i] #分配給Link 1且被判斷為Service Response Level 8~12的所有頻寬 
+        y_9 += L2[i] #分配給Link 2且被判斷為Service Response Level 8~12的所有頻寬 
     # print("len(x_1) :", len(x_1), " len(x_9) :", len(x_9))        
 
     if len(x_9) != 0:

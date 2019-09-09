@@ -20,13 +20,13 @@ def plot_diagram(length, bw_rec, experiment, flag):
     plt.step(x_array, z_array, where='post', label='Source Data')
 
     plt.xlim(0, flag-1)
-    plt.ylim(0, 100)
+    plt.ylim(45, 85)
     plt.xlabel("Flags")
     plt.ylabel("Bandwidth")
     plt.title("QoS_Simulation")
 
-    x_locator = ticker.MultipleLocator(1.0)
-    y_locator = ticker.MultipleLocator(10.0)
+    x_locator = ticker.MultipleLocator(5.0)
+    y_locator = ticker.MultipleLocator(5.0)
     ax.xaxis.set_major_locator(x_locator)
     ax.yaxis.set_major_locator(y_locator)
 
