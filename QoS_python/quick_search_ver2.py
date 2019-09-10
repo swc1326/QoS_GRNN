@@ -43,10 +43,11 @@ if __name__ == '__main__':
     else:
         r, d = 10.0, 10
 
-    for current_run in experiment: #len(experiment) = 40
+    # for current_run in experiment: #len(experiment) = 40
+    for current_time in range(len(experiment) - 1):
         # Initialization
         print ("flag now is ", flag)
-        print ("data is ", current_run)
+        # print ("data is ", current_run)
         
         L1 = [ [] for i in range(num_of_level) ] #link 1 的頻寬, p
         L2 = [ [] for i in range(num_of_level) ] #link 2 的頻寬, q
@@ -76,7 +77,7 @@ if __name__ == '__main__':
         [exp_x, exp_y], allocated_BW = result[0], result[1] #前面預測符合 QoS Level 2 的(p, q)組合中的最小組合即為下一個時間點的頻寬預測
         # allocated_BW = bandwidth(L1, L2, response)[1]
 
-        pkt_loss = experiment[flag-1] - allocated_BW
+        pkt_loss = experiment[flag] - allocated_BW
 
         if pkt_loss < -12.5:
             response = 15.0
@@ -137,4 +138,4 @@ if __name__ == '__main__':
     print("Source Data Rate", experiment)
     print("Allocated Bandwidth", bw_rec)
 
-    plot_diagram(len(experiment), bw_rec, experiment, flag)
+    plot_diagram(len(experiment) - 1, bw_rec, experiment, flag)
